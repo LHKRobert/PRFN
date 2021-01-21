@@ -310,7 +310,7 @@ def save_test_output(result_image, output_dir, image_size, target_size, overlap,
 		output_image = np.zeros(target_size)
 		output_image = np.pad(output_image,((0,image_size),(0,image_size),(0,0)),'constant')
 
-		#拼接滑动步长
+		#Splicing sliding step
 		stride = image_size - overlap
 
 		j = 0 
