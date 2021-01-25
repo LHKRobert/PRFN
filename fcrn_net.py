@@ -116,8 +116,7 @@ def build_F_Multiple_output(image_size,F_name,clone=False):
 	Build feature network to extract image features
 	image_size:The size of the input image
 	F_name:Selected pre-trained model name
-	clone:"True" is the clone model, that is, the network structure of the pre-trained model is loaded but the weight is not loaded; 
-	"False" is the structure and weight of the pre-trained model
+	clone:"True" is the clone model, that is, the network structure of the pre-trained model is loaded but the weight is not loaded; "False" is the structure and weight of the pre-trained model
 	"""
 	input_shape = (image_size,image_size,3)
 	input_layer = Input(shape=input_shape)
@@ -126,15 +125,15 @@ def build_F_Multiple_output(image_size,F_name,clone=False):
 
 	if F_name == 'VGG16':
 		base_model = VGG16(input_shape=input_shape,weights="./vgg16_weights_tf_dim_ordering_tf_kernels.h5")
-		model = Model(inputs=base_model.input, outputs=base_model.get_layer('block4_pool').output)		
+		model = Model(inputs=base_model.input, outputs=base_model.get_layer('Choose the layer you want').output)		
 
 	if F_name == 'InceptionV3':
 		base_model = InceptionV3(input_shape=input_shape,weights="./inception_v3_weights_tf_dim_ordering_tf_kernels.h5")
-		model = Model(inputs=base_model.input, outputs=base_model.get_layer('block4_pool').output)
+		model = Model(inputs=base_model.input, outputs=base_model.get_layer('Choose the layer you want').output)
 
 	if F_name == 'ResNet50':
 		base_model = ResNet50(input_shape=input_shape,weights="./resnet50_weights_tf_dim_ordering_tf_kernels.h5")
-		model = Model(inputs=base_model.input, outputs=[base_model.get_layer('out_relu').output])
+		model = Model(inputs=base_model.input, outputs=[base_model.get_layer('Choose the layer you want').output])
 
 	if F_name == 'MobileNetV2':
 		base_model = MobileNetV2(input_shape=input_shape, weights="./model/mobilenet_v2_weights_tf_dim_ordering_tf_kernels_1.0_224.h5")
@@ -142,19 +141,18 @@ def build_F_Multiple_output(image_size,F_name,clone=False):
 		model = Model(inputs=base_model.input, outputs=[base_model.get_layer('block_1_expand_relu').output,
 														base_model.get_layer('block_3_expand_relu').output,
 														base_model.get_layer('block_6_expand_relu').output,
-														base_model.get_layer('block_13_expand_relu').output,
-														base_model.get_layer('out_relu').output])
+														base_model.get_layer('block_13_expand_relu').output])
 
 	
-	model = clone_model(model)
+	if clone:
+		model = clone_model(model)
 
-	features_1,features_2,features_3,features_4,features_5 = model(input_layer)
+	features_1,features_2,features_3,features_4 = model(input_layer)
 
 	# Create a Keras model
-	model = Model(inputs=[input_layer], outputs=[features_1,features_2,features_3,features_4,features_5])
+	model = Model(inputs=[input_layer], outputs=[features_1,features_2,features_3,features_4])
 	return model
 
-#----------------------------Detector-----------------------------
 
 def build_PCD(image_size, res_num, F_name, F, F_trainable, SeparableConv=False):
 	"""
@@ -164,8 +162,7 @@ def build_PCD(image_size, res_num, F_name, F, F_trainable, SeparableConv=False):
 	res_num:Number of residual blocks for network center feature extraction
 	F_name:Selected pre-trained model name
 	F:Loaded pre-trained model
-	F_trainable:"True" means that the pre-trained model can continue to be trained, 
-	and "Fasle" will set the pre-trained model as untrainable
+	F_trainable:"True" means that the pre-trained model can continue to be trained, and "Fasle" will set the pre-trained model as untrainable
 	"""
 	input_shape_1 = (image_size,image_size,3) # (None,None,3)
 	input_layer_1 = Input(shape = input_shape_1)
@@ -174,30 +171,25 @@ def build_PCD(image_size, res_num, F_name, F, F_trainable, SeparableConv=False):
 	features_1,features_2,features_3,features_4,features_5 = F([input_layer_1])
 
 	f = [features_1,features_2,features_3,features_4,features_5]
-	filters_f = [64,64,128,256,512]
+	filters_f = [64,128,256,512]
 
-	#The size and channel transformation of the intermediate output of the pre-training model
-	if F_name == 'VGG16':
-		#VGG16 does not require transformation
-		feature = Dropout(drop)(feature)
-	else:
-		for i in range(len(f)):
+	#The channel transformation of the intermediate output of the pre-training model
+	
+	for i in range(len(f)):
 
-			f[i] = UpSampling2D()(f[i])
+		if SeparableConv:
+			f[i] = SeparableConv2D(filters=filters_f[i], 
+							kernel_size=3, strides=1, padding='same',
+							depthwise_regularizer=regularizers.l2(regularizer_l2),
+							pointwise_regularizer=regularizers.l2(regularizer_l2))(f[i])
+		else:
+			f[i] = Conv2D(filters=filters_f[i], 
+							kernel_size=3, strides=1, padding='same', 
+							kernel_regularizer=regularizers.l2(regularizer_l2))(f[i])
 
-			if SeparableConv:
-				f[i] = SeparableConv2D(filters=filters_f[i], 
-								kernel_size=3, strides=1, padding='same',
-								depthwise_regularizer=regularizers.l2(regularizer_l2),
-								pointwise_regularizer=regularizers.l2(regularizer_l2))(f[i])
-			else:
-				f[i] = Conv2D(filters=filters_f[i], 
-								kernel_size=3, strides=1, padding='same', 
-								kernel_regularizer=regularizers.l2(regularizer_l2))(f[i])
-
-			f[i] = BatchNormalization()(f[i])
-			f[i] = Activation(activation='relu')(f[i])
-			f[i] = Dropout(drop)(f[i])
+		f[i] = BatchNormalization()(f[i])
+		f[i] = Activation(activation='relu')(f[i])
+		f[i] = Dropout(drop)(f[i])
 
 	x_1 = Conv2D(filters=64, kernel_size=3, strides=1, padding='same', 
 			  kernel_regularizer=regularizers.l2(regularizer_l2))(input_layer_1) #(256,256,64)
@@ -212,35 +204,30 @@ def build_PCD(image_size, res_num, F_name, F, F_trainable, SeparableConv=False):
 	x_4 = residual_block(x_3,[128,256],3,size_op="down",block_num='down_3',SeparableConv=SeparableConv) #32
 	x_4 = Dropout(drop)(x_4)
 
-	x_5 = residual_block(x_4,[256,512],3,size_op="down",block_num='down_4',SeparableConv=SeparableConv) #16
+	x_5 = residual_block(x_4,[256,512],3,size_op="down",block_num='down_4',SeparableConv=True) #16
 	x_5 = Dropout(drop)(x_5)
 
-	x = residual_block(x_5,[512,512],3,size_op="none",block_num='none_1',SeparableConv=SeparableConv) #16
+	x = residual_block(x_5,[512,512],3,size_op="none",block_num='none_1',SeparableConv=True) #16
 	x = Dropout(drop)(x)
-	x = Concatenate(axis=-1)([x,f[4]])
+	x = Concatenate(axis=-1)([x,f[3]])
 
-	#for i in range (res_num - 1):
-	#	x = residual_block(x,[512,512],3,size_op="none",block_num='none_%d'%(i+2))
-
-	x = residual_block(x,[512,256],3,size_op="up",block_num='up_1',SeparableConv=SeparableConv)#32
+	x = residual_block(x,[512,256],3,size_op="up",block_num='up_1',SeparableConv=True)#32
 	x = Dropout(drop)(x)
 
-	x = Concatenate(axis=-1)([x,x_4,f[3]])
+	x = Concatenate(axis=-1)([x,x_4,f[2]])
 
 	x = residual_block(x,[256,128],3,size_op="up",block_num='up_2',SeparableConv=SeparableConv) #64
 	x = Dropout(drop)(x)
 
-	x = Concatenate(axis=-1)([x,x_3,f[2]])
+	x = Concatenate(axis=-1)([x,x_3,f[1]])
 
 	x = residual_block(x,[128,64],3,size_op="up",block_num='up_3',SeparableConv=SeparableConv) #128
 	x = Dropout(drop)(x)
 
-	x = Concatenate(axis=-1)([x,x_2,f[1]])
+	x = Concatenate(axis=-1)([x,x_2,f[0]])
 
 	x = residual_block(x,[64,64],3,size_op="up",block_num='up_4',SeparableConv=SeparableConv) #256
 	x = Dropout(drop)(x)
-
-	x = Concatenate(axis=-1)([x,x_1,f[0]])
 
 	x = Conv2D(filters=1, kernel_size=3, strides=1, padding='same', 
 			kernel_regularizer=regularizers.l2(regularizer_l2))(x)

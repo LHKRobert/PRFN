@@ -47,6 +47,8 @@ def train_PCD():
 
 	output_dir = "./test_results_Munich/test_results_PCD/"
 
+	model_name = 'MobileNetV2'
+
 	#Separator of training set and test set
 	cut_off = 10
 	image_size = 256
@@ -62,12 +64,12 @@ def train_PCD():
 	optimizer = Adam(lr=learning_rate, beta_1=0.5, beta_2=0.999)
 
 	#Load pre-trained model
-	F = fcrn_net.build_F_Multiple_output(image_size,'MobileNetV2')
+	F = fcrn_net.build_F_Multiple_output(image_size,model_name)
 	#Initialize PCD
-	fcrn_model = fcrn_net.build_FCRN_res_separable_Multiple_feature(image_size,res_num,'MobileNetV2',F,F_trainable = True,SeparableConv=False)
+	fcrn_model = fcrn_net.build_PCD(image_size,res_num,F_name = model_name,F = F,F_trainable = True,SeparableConv=False)
 
 	#Define model loss function and optimizer
-	fcrn_model.compile(loss=BCD_loss, optimizer=optimizer) # cxy_loss, binary_crossentropy, sparse_categorical_crossentropy; mae
+	fcrn_model.compile(loss=BCD_loss, optimizer=optimizer)
 
 	tensorboard = TensorBoard(log_dir="./logs/PCD{}".format(time.time()),
 							write_images=True, write_grads=True, write_graph=True)
@@ -118,8 +120,10 @@ def train_PCD():
 			losses.append(loss)
 
 		print("loss:", np.mean(losses))
+
 		#Record loss to log
 		data_processing.write_log(tensorboard, 'fcrn_loss', np.mean(losses), epoch)
+
 		#Print training time
 		print("Time:", (time.time() - start_time))
 
