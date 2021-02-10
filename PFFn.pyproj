@@ -3,13 +3,14 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>ee2ea056-0f32-4e62-ab4d-b185d54ce81a</ProjectGuid>
-    <ProjectHome>.</ProjectHome>
-    <StartupFile>PCD.py</StartupFile>
+    <ProjectHome>
+    </ProjectHome>
+    <StartupFile>PFFN.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
-    <Name>PCD</Name>
+    <Name>PFFn</Name>
     <RootNamespace>PCD</RootNamespace>
     <SuppressConfigureTestFrameworkPrompt>true</SuppressConfigureTestFrameworkPrompt>
   </PropertyGroup>
@@ -23,9 +24,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="data_processing.py" />
-    <Compile Include="fcrn_net.py" />
-    <Compile Include="fcrn_test.py" />
-    <Compile Include="PCD.py" />
+    <Compile Include="PFFN_net.py" />
+    <Compile Include="PFFN_test.py" />
+    <Compile Include="PFFN.py" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in

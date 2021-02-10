@@ -154,9 +154,9 @@ def build_F_Multiple_output(image_size,F_name,clone=False):
 	return model
 
 
-def build_PCD(image_size, res_num, F_name, F, F_trainable, SeparableConv=False):
+def build_PFFN(image_size, res_num, F_name, F, F_trainable, SeparableConv=False):
 	"""
-	Construct an FCRN network built using deep separable convolutional residual blocks, 
+	Construct an PFFN network built using deep separable convolutional residual blocks, 
 	and splice the high-dimensional image features output by the pre-trained imagenet feature extractor in the middle layer
 	image_size:The size of the input image
 	res_num:Number of residual blocks for network center feature extraction
@@ -204,14 +204,14 @@ def build_PCD(image_size, res_num, F_name, F, F_trainable, SeparableConv=False):
 	x_4 = residual_block(x_3,[128,256],3,size_op="down",block_num='down_3',SeparableConv=SeparableConv) #32
 	x_4 = Dropout(drop)(x_4)
 
-	x_5 = residual_block(x_4,[256,512],3,size_op="down",block_num='down_4',SeparableConv=True) #16
+	x_5 = residual_block(x_4,[256,512],3,size_op="down",block_num='down_4',SeparableConv=SeparableConv) #16
 	x_5 = Dropout(drop)(x_5)
 
-	x = residual_block(x_5,[512,512],3,size_op="none",block_num='none_1',SeparableConv=True) #16
+	x = residual_block(x_5,[512,512],3,size_op="none",block_num='none_1',SeparableConv=SeparableConv) #16
 	x = Dropout(drop)(x)
 	x = Concatenate(axis=-1)([x,f[3]])
 
-	x = residual_block(x,[512,256],3,size_op="up",block_num='up_1',SeparableConv=True)#32
+	x = residual_block(x,[512,256],3,size_op="up",block_num='up_1',SeparableConv=SeparableConv)#32
 	x = Dropout(drop)(x)
 
 	x = Concatenate(axis=-1)([x,x_4,f[2]])
@@ -236,6 +236,6 @@ def build_PCD(image_size, res_num, F_name, F, F_trainable, SeparableConv=False):
 
 	output = x
 
-	FCRN_res_model = Model(inputs=[input_layer_1], outputs=[output], name='FCRN')
+	PFFN_res_model = Model(inputs=[input_layer_1], outputs=[output], name='PFFN')
 
-	return FCRN_res_model
+	return PFFN_res_model

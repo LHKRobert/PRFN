@@ -8,9 +8,9 @@ import keras.backend as K
 from keras.optimizers import Adam
 from keras.callbacks import TensorBoard
 
-import fcrn_net
+import PFFN_net
 import data_processing
-import fcrn_test
+import PFFN_test
 
 def BCD_loss(y_true, y_pred):
 	"""
@@ -32,7 +32,7 @@ def l_r(epoch):
 		return 0.0002
 
 #-----------------------------train-----------------------------------
-def train_PCD():
+def train_PFFN():
 
 	#os.environ['CUDA_VISIBLE_DEVICES'] = '3'
 
@@ -64,16 +64,16 @@ def train_PCD():
 	optimizer = Adam(lr=learning_rate, beta_1=0.5, beta_2=0.999)
 
 	#Load pre-trained model
-	F = fcrn_net.build_F_Multiple_output(image_size,model_name)
+	F = PFFN_net.build_F_Multiple_output(image_size,model_name)
 	#Initialize PCD
-	fcrn_model = fcrn_net.build_PCD(image_size,res_num,F_name = model_name,F = F,F_trainable = True,SeparableConv=False)
+	PFFN_model = PFFN_net.build_PFFN(image_size,res_num,F_name = model_name,F = F,F_trainable = True,SeparableConv=False)
 
 	#Define model loss function and optimizer
-	fcrn_model.compile(loss=BCD_loss, optimizer=optimizer)
+	PFFN_model.compile(loss=BCD_loss, optimizer=optimizer)
 
 	tensorboard = TensorBoard(log_dir="./logs/PCD{}".format(time.time()),
 							write_images=True, write_grads=True, write_graph=True)
-	tensorboard.set_model(fcrn_model)
+	tensorboard.set_model(PFFN_model)
 
 	images, labels = data_processing.load_original_images(data_dir,label_dir,cut_off,train=True)
 	rows, cols = labels[0].shape
@@ -104,7 +104,7 @@ def train_PCD():
 		losses = []
 
 		# set new lr
-		K.set_value(fcrn_model.optimizer.lr, l_r(epoch))  
+		K.set_value(PFFN_model.optimizer.lr, l_r(epoch))  
 
 		num_batches = int(X.shape[0] / batch_size)
 
@@ -116,13 +116,13 @@ def train_PCD():
 			"""
 			Train model
 			"""
-			loss = fcrn_model.train_on_batch(image_batch, label_batch)
+			loss = PFFN_model.train_on_batch(image_batch, label_batch)
 			losses.append(loss)
 
 		print("loss:", np.mean(losses))
 
 		#Record loss to log
-		data_processing.write_log(tensorboard, 'fcrn_loss', np.mean(losses), epoch)
+		data_processing.write_log(tensorboard, 'PFFN_loss', np.mean(losses), epoch)
 
 		#Print training time
 		print("Time:", (time.time() - start_time))
@@ -137,7 +137,7 @@ def train_PCD():
 			image = X[n:n + 2]
 			label = Y[n:n + 2]
 
-			result_image = fcrn_model.predict([image])
+			result_image = PFFN_model.predict([image])
 			
 			cv2.imwrite("./results/{}_0_image.png".format(epoch),image[0] * 255)
 			cv2.imwrite("./results/{}_0_result_image.png".format(epoch),result_image[0] * 255)
@@ -151,7 +151,7 @@ def train_PCD():
 			""" 
 			Save models
 			"""
-			fcrn_model.save("./model/PCD_model_%d.h5" % epoch)
+			PFFN_model.save("./model/PCD_model_%d.h5" % epoch)
 			print("---save!---" + "\n")
 
 		if (epoch + 1) % 10 == 0:
@@ -160,8 +160,8 @@ def train_PCD():
 			"""
 			test models
 			"""
-			fcrn_test.test(data_dir=test_data_dir,label_dir=test_label_dir,output_dir=output_dir,
-							image_size=image_size,model_num=epoch,fcrn_test_model=fcrn_model,
+			PFFN_test.test(data_dir=test_data_dir,label_dir=test_label_dir,output_dir=output_dir,
+							image_size=image_size,model_num=epoch,PFFN_test_model=PFFN_model,
 							target_size=target_size,overlap=int(image_size / 4))
 
 		print("--------------------------")
