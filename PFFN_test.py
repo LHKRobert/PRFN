@@ -3,7 +3,7 @@ import numpy as np
 
 import data_processing
 
-def test(data_dir,label_dir,output_dir,image_size,model_num,PFFN_test_model,target_size,overlap):
+def test(data_dir,label_dir,output_dir,image_size,model_num,test_model,target_size,overlap):
 	"""
 	Call the model to test on the test set
 	data_dir: test set address
@@ -11,7 +11,7 @@ def test(data_dir,label_dir,output_dir,image_size,model_num,PFFN_test_model,targ
 	output_dir: test output address
 	image_size: The size of the image sent to the network test
 	model_num: the serial number of the test model
-	PFFN_test_model: the tested model
+	test_model: the tested model
 	target_size: original image size
 	overlap: the overlap length between each small image when cutting the original image
 	"""
@@ -37,7 +37,7 @@ def test(data_dir,label_dir,output_dir,image_size,model_num,PFFN_test_model,targ
 
 			#predict
 			j = np.reshape(j,(1,image_size,image_size,3))
-			j = PFFN_test_model.predict([j])
+			j = test_model.predict([j])
 
 			result.append(j)
 		result_image.append(result)

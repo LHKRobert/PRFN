@@ -5,12 +5,13 @@
     <ProjectGuid>ee2ea056-0f32-4e62-ab4d-b185d54ce81a</ProjectGuid>
     <ProjectHome>
     </ProjectHome>
-    <StartupFile>PFFN.py</StartupFile>
+    <StartupFile>
+    </StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
-    <Name>PFFn</Name>
+    <Name>PFFN</Name>
     <RootNamespace>PCD</RootNamespace>
     <SuppressConfigureTestFrameworkPrompt>true</SuppressConfigureTestFrameworkPrompt>
   </PropertyGroup>

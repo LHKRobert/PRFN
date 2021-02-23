@@ -45,7 +45,7 @@ def train_PFFN():
 	test_data_dir = "./data/vehicle_test/"
 	test_label_dir = "./data/label_test/"
 
-	output_dir = "./test_results_Munich/test_results_PCD/"
+	output_dir = "./test_results_Munich/test_results_PFFN/"
 
 	model_name = 'MobileNetV2'
 
@@ -65,13 +65,13 @@ def train_PFFN():
 
 	#Load pre-trained model
 	F = PFFN_net.build_F_Multiple_output(image_size,model_name)
-	#Initialize PCD
+	#Initialize PFFN
 	PFFN_model = PFFN_net.build_PFFN(image_size,res_num,F_name = model_name,F = F,F_trainable = True,SeparableConv=False)
 
 	#Define model loss function and optimizer
 	PFFN_model.compile(loss=BCD_loss, optimizer=optimizer)
 
-	tensorboard = TensorBoard(log_dir="./logs/PCD{}".format(time.time()),
+	tensorboard = TensorBoard(log_dir="./logs/PFFN{}".format(time.time()),
 							write_images=True, write_grads=True, write_graph=True)
 	tensorboard.set_model(PFFN_model)
 
@@ -151,7 +151,7 @@ def train_PFFN():
 			""" 
 			Save models
 			"""
-			PFFN_model.save("./model/PCD_model_%d.h5" % epoch)
+			PFFN_model.save("./model/PFFN_model_%d.h5" % epoch)
 			print("---save!---" + "\n")
 
 		if (epoch + 1) % 10 == 0:
@@ -161,7 +161,7 @@ def train_PFFN():
 			test models
 			"""
 			PFFN_test.test(data_dir=test_data_dir,label_dir=test_label_dir,output_dir=output_dir,
-							image_size=image_size,model_num=epoch,PFFN_test_model=PFFN_model,
+							image_size=image_size,model_num=epoch,test_model=PFFN_model,
 							target_size=target_size,overlap=int(image_size / 4))
 
 		print("--------------------------")
@@ -170,6 +170,6 @@ def train_PFFN():
 
 if __name__ == '__main__':
 
-	train_PCD()
+	train_PFFN()
 
 
